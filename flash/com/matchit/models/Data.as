@@ -6,8 +6,6 @@
 	 */
 	public class Data
 	{
-		public static var POST_URL:String = "http://matchit.stage.ddfcb.com/_assets/scripts/rich-media-test.php";
-		
 		public var icons:Array;
 		
 		private static var instance:Data;

@@ -15,15 +15,22 @@
 	public class MatchGame extends Sprite
 	{
 		private static const COLS:int = 4;
+		private static const OFFSET_X:Number = 0;
+		private static const OFFSET_Y:Number = 0;
+		private static const PADDING:Number = 0;
 		private static const ROWS:int = 3;
-		private static const TAR_X:Number = 89;
-		private static const TAR_Y:Number = 78;
-		private static const OFFSET_X:Number = 1;
-		private static const OFFSET_Y:Number = 16;
+		private static const TAR_X:Number = 90;
+		private static const TAR_Y:Number = 80;
 		
-		private var cardContainer:Sprite;
+		private var playButton:BaseButton;
 		private var firstCard:Card;
 		private var secondCard:Card;
+		private var cardBorder:CardBorder;
+		private var reveal:Loader;
+		private var overlay:Loader;
+		private var overlayMask:OverlayMask;
+		private var cardContainer:Sprite;
+		private var revealMask:Sprite;
 		
 		private var cards:Array;
 		private var cardsLeft:int;
@@ -41,7 +48,7 @@
 		public function endGame():void 
 		{
 			overlay.visible = overlayMask.visible = false;
-			new TweenLite(opacity, .2, { autoAlpha:0 } );
+			new TweenLite(revealMask, .2, { autoAlpha:0 } );
 		}
 		
 		public function hide():void 
@@ -51,22 +58,42 @@
 		
 		public function init():void 
 		{
-			x = 0;
-			y = 0;
-			
+			x = OFFSET_X;
+			y = OFFSET_Y;
 			total = COLS * ROWS;
 			
+			reveal = new Loader();
+			addChild(reveal);
+			
+			revealMask = new Sprite();
+			revealMask.graphics.beginFill(0xffffff);
+			revealMask.graphics.drawRect(0, 0, COLS * TAR_X, ROWS * TAR_Y);
+			revealMask.graphics.endFill();
+			revealMask.alpha = .5;
+			addChild(revealMask);
+			
+			overlay = new Loader();
+			addChild(overlay);
+			
+			overlayMask = new OverlayMask();
+			addChild(overlayMask);
+			overlayMask.init(COLS, ROWS, TAR_X, TAR_Y);
+			
+			cardBorder = new CardBorder();
+			addChild(cardBorder);
+			cardBorder.init(COLS, ROWS, TAR_X, TAR_Y);
+			
 			cardContainer = new Sprite();
-			cardContainer.x = OFFSET_X;
-			cardContainer.y = OFFSET_Y;
 			addChild(cardContainer);
 			
 			overlay.cacheAsBitmap = overlayMask.cacheAsBitmap = true;
 			overlay.mask = overlayMask;
 			
-			buttonPlay.visible = false;
-			buttonPlay.alpha = 0;
-			buttonPlay.addEventListener(ButtonEvent.RELEASE, onPlayClick);
+			playButton = new PlayButton();
+			playButton.alpha = 0;
+			playButton.visible = false;
+			playButton.addEventListener(ButtonEvent.RELEASE, onPlayClick);
+			addChild(playButton);
 			
 			startTimer = new Timer(START_POLL);
 			startTimer.addEventListener(TimerEvent.TIMER, onTimerFire);
@@ -75,15 +102,15 @@
 		public function show():void 
 		{
 			visible = true;
-			TweenLite.to(buttonPlay, .3, { autoAlpha:1, delay:1 } );
+			TweenLite.to(playButton, .3, { autoAlpha:1, delay:1 } );
 			startTimer.start();
 		}
 		
 		public function startGame(data:Array):void 
 		{
-			TweenLite.to(buttonPlay, .3, { autoAlpha:0 } );
-			
 			cards = data.splice(0, (COLS * ROWS) * .5);
+			
+			TweenLite.to(playButton, .3, { autoAlpha:0 } );
 			
 			var placedCards:Array = [];
 			var c:Card;
@@ -121,6 +148,7 @@
 			
 			shimmer();
 		}
+		
 		// privates
 		private function matchCards():void 
 		{
@@ -147,11 +175,12 @@
 			first.icon.visible = first.bg.visible = second.icon.visible = second.bg.visible = false;
 			first.enabled = second.enabled = true;
 		}
-		// highlight the cards
+		
 		private function hideCard(c:Card):void 
 		{
 			new TweenLite(c.hit, .4, { alpha:0, delay:.15 } );
 		}
+		
 		private function shimmer():void 
 		{
 			for (var i:Number = 0; i < cardContainer.numChildren; ++i) {
@@ -159,6 +188,7 @@
 				new TweenLite(c.hit, .25, { alpha:.5, delay:.15 * (i % ROWS) + .1, onComplete:hideCard, onCompleteParams:[c] } );
 			}
 		}
+		
 		// event handlers
 		private function onCardOut(e:ButtonEvent):void 
 		{
