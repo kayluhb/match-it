@@ -26,8 +26,8 @@
 		private var firstCard:Card;
 		private var secondCard:Card;
 		private var cardBorder:CardBorder;
-		private var reveal:Loader;
-		private var overlay:Loader;
+		private var reveal:Reveal;
+		private var overlay:Overlay;
 		private var overlayMask:OverlayMask;
 		private var cardContainer:Sprite;
 		private var revealMask:Sprite;
@@ -62,8 +62,9 @@
 			y = OFFSET_Y;
 			total = COLS * ROWS;
 			
-			reveal = new Loader();
+			reveal = new Reveal();
 			addChild(reveal);
+			reveal.init();
 			
 			revealMask = new Sprite();
 			revealMask.graphics.beginFill(0xffffff);
@@ -72,12 +73,15 @@
 			revealMask.alpha = .5;
 			addChild(revealMask);
 			
-			overlay = new Loader();
+			overlay = new Overlay();
 			addChild(overlay);
+			overlay.init();
 			
 			overlayMask = new OverlayMask();
 			addChild(overlayMask);
 			overlayMask.init(COLS, ROWS, TAR_X, TAR_Y);
+			
+			overlay.mask = overlayMask;
 			
 			cardBorder = new CardBorder();
 			addChild(cardBorder);
@@ -85,9 +89,6 @@
 			
 			cardContainer = new Sprite();
 			addChild(cardContainer);
-			
-			overlay.cacheAsBitmap = overlayMask.cacheAsBitmap = true;
-			overlay.mask = overlayMask;
 			
 			playButton = new PlayButton();
 			playButton.alpha = 0;
@@ -115,7 +116,8 @@
 			var placedCards:Array = [];
 			var c:Card;
 			// create all the cards, position them
-			for (var i:Number = 0; i < COLS * ROWS; ++i) {
+			for (var i:Number = 0; i < COLS * ROWS; ++i) 
+			{
 				c = new Card();
 				c.x = i % COLS * TAR_X;
 				c.y = Math.floor(i / COLS) * TAR_Y;
@@ -132,7 +134,8 @@
 			// go through the cards array, select 2 random cards, and assign them the data
 			var tmp:Array = ArrayUtils.shuffle(placedCards.slice()); // duplicate and shuffle this array
 			var id:Number = 0;
-			for (i = 0; i < cards.length; ++i) {
+			for (i = 0; i < cards.length; ++i) 
+			{
 				var ico:Icon = cards[i] as Icon;
 				
 				c = tmp[id];
@@ -153,14 +156,17 @@
 		private function matchCards():void 
 		{
 			// compare the two cards
-			if (firstCard.id == secondCard.id) {
+			if (firstCard.id == secondCard.id) 
+			{
 				new TweenLite(firstCard, .3, { autoAlpha:0, delay:1 } );
 				new TweenLite(secondCard, .3, { autoAlpha:0, delay:1, onComplete:onCorrectCards, onCompleteParams:[firstCard, secondCard] } );
 				firstCard = null;
 				secondCard = null;
 				cardsLeft += 2;
 				if (cardsLeft == total - 2) new TweenLite(cardBorder, .2, { autoAlpha:0 } );
-			} else {
+			} 
+			else 
+			{
 				new TweenLite(firstCard.bg, .3, { autoAlpha:0, delay:1 } );
 				new TweenLite(firstCard.icon, .3, { autoAlpha:0, delay:1 } );
 				new TweenLite(secondCard.bg, .3, { autoAlpha:0, delay:1, overwrite:false } );
@@ -183,7 +189,8 @@
 		
 		private function shimmer():void 
 		{
-			for (var i:Number = 0; i < cardContainer.numChildren; ++i) {
+			for (var i:Number = 0; i < cardContainer.numChildren; ++i) 
+			{
 				var c:Card = cardContainer.getChildAt(i) as Card;
 				new TweenLite(c.hit, .25, { alpha:.5, delay:.15 * (i % ROWS) + .1, onComplete:hideCard, onCompleteParams:[c] } );
 			}
@@ -224,12 +231,7 @@
 		
 		private function onCorrectCards(first:Card, second:Card):void 
 		{
-			// get the clips in the mask that needs to hide now
-			var mc:DisplayObject = overlayMask.getChildByName("card" + first.idx);
-			new TweenLite(mc, .3, { autoAlpha:0 } );
-			
-			mc = overlayMask.getChildByName("card" + second.idx);
-			new TweenLite(mc, .3, { autoAlpha:0 } );
+			overlayMask.hideCards(first, second);
 			
 			// remove the cards that are matched
 			cardContainer.removeChild(first);

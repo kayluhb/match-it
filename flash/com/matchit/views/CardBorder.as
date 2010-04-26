@@ -12,7 +12,8 @@
 			
 		}
 		// publics
-		public function init(cols:Number, rows:Number, tarX:Number, tarY:Number):void {
+		public function init(cols:Number, rows:Number, tarX:Number, tarY:Number):void 
+		{
 			
 		}
 		// privates
