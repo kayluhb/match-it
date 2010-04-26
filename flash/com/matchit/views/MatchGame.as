@@ -15,8 +15,8 @@
 	public class MatchGame extends Sprite
 	{
 		private static const COLS:int = 4;
-		private static const OFFSET_X:Number = 0;
-		private static const OFFSET_Y:Number = 0;
+		private static const OFFSET_X:Number = 10;
+		private static const OFFSET_Y:Number = 10;
 		private static const PADDING:Number = 0;
 		private static const ROWS:int = 3;
 		private static const TAR_X:Number = 90;
@@ -33,7 +33,7 @@
 		private var revealMask:Sprite;
 		
 		private var cards:Array;
-		private var cardsLeft:int;
+		private var cardsRemoved:int;
 		private var total:int;
 		private var startTimer:Timer;
 		
@@ -119,20 +119,18 @@
 			for (var i:Number = 0; i < COLS * ROWS; ++i) 
 			{
 				c = new Card();
+				c.idx = i;
 				c.x = i % COLS * TAR_X;
 				c.y = Math.floor(i / COLS) * TAR_Y;
-				
-				c.bg.visible = c.icon.visible = false;
-				c.bg.alpha = c.icon.alpha = 0;
-				c.idx = i;
-				c.addEventListener(ButtonEvent.OUT, onCardOut);
-				c.addEventListener(ButtonEvent.OVER, onCardOver);
-				c.addEventListener(ButtonEvent.RELEASE, onCardClick); // have it listen for clicks
+				c.addEventListener(ButtonEvent.RELEASE, onCardClick);
 				cardContainer.addChild(c);
+				c.init();
+				
 				placedCards[placedCards.length] = c;
 			}
 			// go through the cards array, select 2 random cards, and assign them the data
-			var tmp:Array = ArrayUtils.shuffle(placedCards.slice()); // duplicate and shuffle this array
+			// duplicate and shuffle this array
+			var tmp:Array = ArrayUtils.shuffle(placedCards.slice());
 			var id:Number = 0;
 			for (i = 0; i < cards.length; ++i) 
 			{
@@ -162,8 +160,8 @@
 				new TweenLite(secondCard, .3, { autoAlpha:0, delay:1, onComplete:onCorrectCards, onCompleteParams:[firstCard, secondCard] } );
 				firstCard = null;
 				secondCard = null;
-				cardsLeft += 2;
-				if (cardsLeft == total - 2) new TweenLite(cardBorder, .2, { autoAlpha:0 } );
+				cardsRemoved += 2;
+				if (cardsRemoved == total - 2) new TweenLite(cardBorder, .2, { autoAlpha:0 } );
 			} 
 			else 
 			{
@@ -184,7 +182,7 @@
 		
 		private function hideCard(c:Card):void 
 		{
-			new TweenLite(c.hit, .4, { alpha:0, delay:.15 } );
+			c.hide();
 		}
 		
 		private function shimmer():void 
@@ -197,25 +195,11 @@
 		}
 		
 		// event handlers
-		private function onCardOut(e:ButtonEvent):void 
-		{
-			new TweenLite(e.target.hit, .4, { alpha:0 } );
-		}
-		
-		private function onCardOver(e:ButtonEvent):void 
-		{
-			new TweenLite(e.target.hit, .25, { alpha:.3 } );
-		}
-		
 		private function onCardClick(e:ButtonEvent):void 
 		{
 			// grab the card and hide it
-			var card:Card = e.target as Card; // what card?
-			new TweenLite(card.bg, .3, { autoAlpha:1 } );
-			new TweenLite(card.icon, .3, { autoAlpha:1 } );
-			TweenLite.killTweensOf(card.hit);
-			card.hit.alpha = 0;
-			card.enabled = false;
+			var card:Card = e.target as Card;
+			card.click();
 			
 			// user hasn't selected a card
 			if (firstCard == null) 
