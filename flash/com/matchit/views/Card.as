@@ -60,6 +60,7 @@ package com.matchit.views
 		{
 			bg.visible = icon.visible = false;
 			bg.alpha = icon.alpha = 0;
+			icon.blendMode = BlendMode.LAYER;
 		}
 		// privates
 		private function addEvents():void 

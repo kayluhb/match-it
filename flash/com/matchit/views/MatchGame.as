@@ -67,7 +67,7 @@
 			reveal.init();
 			
 			revealMask = new Sprite();
-			revealMask.graphics.beginFill(0xffffff);
+			revealMask.graphics.beginFill(0xff0000);
 			revealMask.graphics.drawRect(0, 0, COLS * TAR_X, ROWS * TAR_Y);
 			revealMask.graphics.endFill();
 			revealMask.alpha = .5;
