@@ -73,6 +73,8 @@
 			revealMask.alpha = .5;
 			addChild(revealMask);
 			
+			reveal.mask = revealMask;
+			
 			overlay = new Overlay();
 			addChild(overlay);
 			overlay.init();
