@@ -2,6 +2,7 @@ package com.matchit.views
 {
 	import com.greensock.TweenLite;
 	import com.matchit.events.ButtonEvent;
+	import com.matchit.events.MatchItEvent;
 	import flash.display.*;
 	import flash.events.*;
 	/**
@@ -61,6 +62,19 @@ package com.matchit.views
 			bg.visible = icon.visible = false;
 			bg.alpha = icon.alpha = 0;
 			icon.blendMode = BlendMode.LAYER;
+		}
+		public function reset():void
+		{
+			new TweenLite(bg, .3, { autoAlpha:0, delay:1, overwrite:false } );
+			new TweenLite(icon, .3, { autoAlpha:0, delay:1, overwrite:false, onComplete:dispatchEvent, onCompleteParams:[new Event(MatchItEvent.RESET)] } );
+		}
+		public function remove():void 
+		{
+			new TweenLite(this, .3, { autoAlpha:0, delay:1, onComplete:dispatchEvent, onCompleteParams:[new Event(MatchItEvent.REMOVE)] } );
+		}
+		public function shimmer(delay:Number):void
+		{
+			new TweenLite(hit, .25, { alpha:.5, delay:delay, onComplete:hide } );
 		}
 		// privates
 		private function addEvents():void 

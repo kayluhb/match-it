@@ -1,5 +1,6 @@
 ﻿package com.matchit.views 
 {
+	import com.greensock.TweenLite;
 	import flash.display.BlendMode;
 	import flash.display.Shape;
 	import flash.display.Sprite;
@@ -14,6 +15,10 @@
 			
 		}
 		// publics
+		public function hide():void
+		{
+			new TweenLite(this, .3, { autoAlpha:0 } );
+		}
 		public function init(cols:Number, rows:Number, tarX:Number, tarY:Number):void 
 		{
 			var main:Sprite = new Sprite();
@@ -37,6 +42,11 @@
 			container.blendMode = BlendMode.ERASE;
 			main.addChild(container);
 			main.blendMode = BlendMode.LAYER;
+		}
+		
+		public function show():void
+		{
+			new TweenLite(this, .3, { autoAlpha:1 } );
 		}
 		// privates
 		// event handlers

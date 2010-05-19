@@ -22,14 +22,12 @@
 		public function init():void 
 		{
 			// add all the views and init them
-			
 			matchGame = new MatchGame();
 			matchGame.addEventListener(MatchItEvent.GAME_START, onGameStart);
 			addChild(matchGame);
 			matchGame.init();
 			
 			visible = true;
-			
 			matchGame.show();
 		}
 		// privates

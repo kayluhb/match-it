@@ -15,8 +15,8 @@
 	public class MatchGame extends Sprite
 	{
 		private static const COLS:int = 4;
-		private static const OFFSET_X:Number = 10;
-		private static const OFFSET_Y:Number = 10;
+		private static const OFFSET_X:Number = 20;
+		private static const OFFSET_Y:Number = 20;
 		private static const PADDING:Number = 0;
 		private static const ROWS:int = 3;
 		private static const TAR_X:Number = 90;
@@ -35,9 +35,10 @@
 		private var cards:Array;
 		private var cardsRemoved:int;
 		private var total:int;
+		private var restartTimer:Timer;
 		private var startTimer:Timer;
 		
-		private var START_POLL:Number = 6000;
+		private var POLL:Number = 6000;
 		
 		public function MatchGame() 
 		{
@@ -47,8 +48,9 @@
 		// publics
 		public function endGame():void 
 		{
-			overlay.visible = overlayMask.visible = false;
-			new TweenLite(revealMask, .2, { autoAlpha:0 } );
+			overlay.hide();
+			cardBorder.hide();
+			restartTimer.start();
 		}
 		
 		public function hide():void 
@@ -58,26 +60,19 @@
 		
 		public function init():void 
 		{
+			var h:Number = ROWS * TAR_Y;
+			var w:Number = COLS * TAR_X;
 			x = OFFSET_X;
 			y = OFFSET_Y;
 			total = COLS * ROWS;
 			
 			reveal = new Reveal();
 			addChild(reveal);
-			reveal.init();
-			
-			revealMask = new Sprite();
-			revealMask.graphics.beginFill(0xff0000);
-			revealMask.graphics.drawRect(0, 0, COLS * TAR_X, ROWS * TAR_Y);
-			revealMask.graphics.endFill();
-			revealMask.alpha = .5;
-			addChild(revealMask);
-			
-			reveal.mask = revealMask;
+			reveal.init(h, w);
 			
 			overlay = new Overlay();
 			addChild(overlay);
-			overlay.init();
+			overlay.init(h, w);
 			
 			overlayMask = new OverlayMask();
 			addChild(overlayMask);
@@ -98,14 +93,21 @@
 			playButton.addEventListener(ButtonEvent.RELEASE, onPlayClick);
 			addChild(playButton);
 			
-			startTimer = new Timer(START_POLL);
+			startTimer = new Timer(POLL);
 			startTimer.addEventListener(TimerEvent.TIMER, onTimerFire);
+			
+			restartTimer = new Timer(POLL);
+			restartTimer.addEventListener(TimerEvent.TIMER, onRestartFire);
 		}
 		
 		public function show():void 
 		{
 			visible = true;
-			TweenLite.to(playButton, .3, { autoAlpha:1, delay:1 } );
+			overlayMask.reset();
+			overlay.show();
+			cardBorder.show();
+			
+			new TweenLite(playButton, .3, { autoAlpha:1, delay:1 } );
 			startTimer.start();
 		}
 		
@@ -125,6 +127,8 @@
 				c.x = i % COLS * TAR_X;
 				c.y = Math.floor(i / COLS) * TAR_Y;
 				c.addEventListener(ButtonEvent.RELEASE, onCardClick);
+				c.addEventListener(MatchItEvent.REMOVE, onCardRemove);
+				c.addEventListener(MatchItEvent.RESET, onCardReset);
 				cardContainer.addChild(c);
 				c.init();
 				
@@ -158,33 +162,20 @@
 			// compare the two cards
 			if (firstCard.id == secondCard.id) 
 			{
-				new TweenLite(firstCard, .3, { autoAlpha:0, delay:1 } );
-				new TweenLite(secondCard, .3, { autoAlpha:0, delay:1, onComplete:onCorrectCards, onCompleteParams:[firstCard, secondCard] } );
+				firstCard.remove();
+				secondCard.remove();
+				
 				firstCard = null;
 				secondCard = null;
-				cardsRemoved += 2;
-				if (cardsRemoved == total - 2) new TweenLite(cardBorder, .2, { autoAlpha:0 } );
 			} 
 			else 
 			{
-				new TweenLite(firstCard.bg, .3, { autoAlpha:0, delay:1 } );
-				new TweenLite(firstCard.icon, .3, { autoAlpha:0, delay:1 } );
-				new TweenLite(secondCard.bg, .3, { autoAlpha:0, delay:1, overwrite:false } );
-				new TweenLite(secondCard.icon, .3, { autoAlpha:0, delay:1, onComplete:resetCards, onCompleteParams:[firstCard, secondCard], overwrite:false } );
+				firstCard.reset();
+				secondCard.reset();
+				
 				firstCard = null;
 				secondCard = null;
 			}
-		}
-		
-		private function resetCards(first:Card, second:Card):void 
-		{
-			first.icon.visible = first.bg.visible = second.icon.visible = second.bg.visible = false;
-			first.enabled = second.enabled = true;
-		}
-		
-		private function hideCard(c:Card):void 
-		{
-			c.hide();
 		}
 		
 		private function shimmer():void 
@@ -192,7 +183,7 @@
 			for (var i:Number = 0; i < cardContainer.numChildren; ++i) 
 			{
 				var c:Card = cardContainer.getChildAt(i) as Card;
-				new TweenLite(c.hit, .25, { alpha:.5, delay:.15 * (i % ROWS) + .1, onComplete:hideCard, onCompleteParams:[c] } );
+				c.shimmer(.15 * (i % ROWS) + .1);
 			}
 		}
 		
@@ -215,15 +206,22 @@
 			}
 		}
 		
-		private function onCorrectCards(first:Card, second:Card):void 
+		private function onCardRemove(e:Event):void 
 		{
-			overlayMask.hideCards(first, second);
+			++cardsRemoved;
+			var card:Card = e.target as Card;
+			overlayMask.hideCard(card);
 			
 			// remove the cards that are matched
-			cardContainer.removeChild(first);
-			cardContainer.removeChild(second);
+			cardContainer.removeChild(card);
 			
 			if (cardContainer.numChildren == 0) endGame();
+		}
+		
+		private function onCardReset(e:Event):void 
+		{
+			var card:Card = e.target as Card;
+			card.enabled = true;
 		}
 		
 		private function onHide():void 
@@ -235,6 +233,12 @@
 		{
 			startTimer.stop();
 			dispatchEvent(new Event(MatchItEvent.GAME_START));
+		}
+		
+		private function onRestartFire(e:TimerEvent):void
+		{
+			restartTimer.stop();
+			show();
 		}
 		
 		private function onTimerFire(e:TimerEvent):void
